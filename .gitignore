@@ -1,1 +1,9 @@
 /.idea
+/lib
+/CMakeFiles
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+project
+shader/frag.glsl.c
+shader/vert.glsl.c

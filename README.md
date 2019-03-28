@@ -4,7 +4,7 @@ To run the code:
 
 `cd <path-to-folder`
 
-`cmake <path-to-folder>`
+`cmake CMakeLists.txt`
 
 `make`
 
