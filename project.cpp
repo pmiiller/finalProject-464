@@ -218,8 +218,12 @@ class MyGLCanvas : public nanogui::GLCanvas {
     vector <int> splitOnSpaceI(string line) {
       int numberStart = -1;
       int numberLength = 0;
+      int inputs = 0;
       vector <int> output;
       for (int i = 1; i < line.length(); i++) {
+        if (inputs == 3) {
+          break;
+        }
         if (line[i] != ' ') {
           if (numberStart < 0) {
             numberStart = i;
@@ -229,6 +233,7 @@ class MyGLCanvas : public nanogui::GLCanvas {
           output.push_back(std::stoi(line.substr(numberStart, numberLength)));
           numberStart = -1;
           numberLength = 0;
+          inputs++;
         }
       }
       if (numberStart != -1) {
@@ -237,9 +242,11 @@ class MyGLCanvas : public nanogui::GLCanvas {
       return output;
     }
 
-    void readVertexLine(string line, int *vertexCounter) {
+    void readVertexLine(string line) {
       vector <float> vertexCoordinates = splitOnSpaceF(line);
-      vertices.col(*vertexCounter) <<  vertexCoordinates[0], vertexCoordinates[1], vertexCoordinates[2];
+
+      vertices.conservativeResize(vertices.rows(), vertices.cols()+1);
+      vertices.col(vertices.cols()-1) <<  vertexCoordinates[0], vertexCoordinates[1], vertexCoordinates[2];
 
       maxX = max(maxX, vertexCoordinates[0]);
       minX = min(minX, vertexCoordinates[0]);
@@ -247,14 +254,13 @@ class MyGLCanvas : public nanogui::GLCanvas {
       minY = min(minY, vertexCoordinates[1]);
       maxZ = max(maxZ, vertexCoordinates[2]);
       minZ = min(minZ, vertexCoordinates[2]);
-
-      *vertexCounter = *vertexCounter + 1;
     }
 
-    void readFaceLine(string line, int *faceCounter) {
+    void readFaceLine(string line) {
       vector <int> vertexIndexes = splitOnSpaceI(line);
-      faces.col(*faceCounter) <<  vertexIndexes[0] - 1, vertexIndexes[1] - 1, vertexIndexes[2] - 1;
-      *faceCounter = *faceCounter + 1;
+
+      faces.conservativeResize(faces.rows(), faces.cols()+1);
+      faces.col(faces.cols()-1) <<  vertexIndexes[0] - 1, vertexIndexes[1] - 1, vertexIndexes[2] - 1;
     }
 
     void readOBJLines(string objFile) {
@@ -262,13 +268,9 @@ class MyGLCanvas : public nanogui::GLCanvas {
       std::ifstream myfile (objFile);
 
       if (myfile.is_open()) {
-        getline (myfile,line);
 
-        getOBJNumber(line);
-        printf("Vertices: %d, Faces: %d\n", vertexNumber, faceNumber);
-
-        vertices.resize(3, vertexNumber);
-        faces.resize(3, faceNumber);
+        vertices.resize(3, 0);
+        faces.resize(3, 0);
 
         int vertexCounter = 0;
         int faceCounter = 0;
@@ -276,13 +278,15 @@ class MyGLCanvas : public nanogui::GLCanvas {
         while ( getline (myfile,line) )
         {
           if (line[0] == 'v') {
-            readVertexLine(line, &vertexCounter);
+            readVertexLine(line);
           }
           if (line[0] == 'f') {
-            readFaceLine(line, &faceCounter);
+            readFaceLine(line);
           }
         }
-        printf("VertexCounter: %d, FaceCounter: %d\n", vertexCounter, faceCounter);
+
+        vertexNumber = vertices.cols();
+        faceNumber = faces.cols();
 
         myfile.close();
       }
